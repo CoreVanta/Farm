@@ -179,8 +179,8 @@ function onTileClick(index){
 function harvestAt(index){
   const tile = state.tiles[index];
   if(!tile || !tile.cropId) return;
-  const crop = CROPS[tile.cropId];
-  state.inventory[crop.cropId] += crop.yield;
+  const crop = CROPS[tile.cropId]; // استخدم tile.cropId هنا
+  state.inventory[tile.cropId] += crop.yield; // تصحيح هنا
   state.xp += crop.xp;
   log(`حصاد: ${crop.emoji} ${crop.name} +${crop.yield} وحدات`);
   state.tiles[index] = { cropId:null, plantedAt:0, readyAt:0 };
