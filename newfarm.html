@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="ar">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Mini Farm — مزرعتي البسيطة</title>
+<style>
+  :root{
+    --bg:#f0f6ef;
+    --panel:#ffffff;
+    --accent:#4caf50;
+    --tile:#d9ead3;
+    --soil:#b07a4b;
+    --ready:#ffd54f;
+    font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+  }
+  html,body{height:100%; margin:0; background:var(--bg); color:#333}
+  .wrap{max-width:1100px;margin:18px auto;padding:12px;display:flex;gap:16px;align-items:flex-start}
+  .left{flex:1; background:var(--panel); padding:12px;border-radius:10px; box-shadow:0 4px 10px rgba(0,0,0,0.06)}
+  .right{width:300px;background:var(--panel); padding:12px;border-radius:10px; box-shadow:0 4px 10px rgba(0,0,0,0.06)}
+  h1{margin:0 0 8px;font-size:20px}
+  .row {display:flex;gap:8px;margin-bottom:8px;align-items:center}
+  .status {display:flex;gap:8px;flex-wrap:wrap}
+  .chip{background:#f8fff8;padding:8px 10px;border-radius:8px;font-weight:600;color:#144d14;display:flex;align-items:center;gap:8px}
+  .grid{display:grid; grid-template-columns: repeat(5, 1fr); gap:8px; margin-top:12px}
+  .tile{background:var(--tile); height:96px;border-radius:8px;display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer; user-select:none; border:2px solid rgba(0,0,0,0.03)}
+  .tile .info{position:absolute; left:6px; top:6px; font-size:12px; background:rgba(255,255,255,0.75); padding:2px 6px;border-radius:4px}
+  .soil{width:80%;height:60%; background:var(--soil); border-radius:6px; display:flex;align-items:center;justify-content:center; font-size:22px; color:white}
+  .seed{font-size:28px}
+  .progress{position:absolute; right:6px; bottom:6px; font-size:12px; background:rgba(255,255,255,0.85); padding:2px 6px;border-radius:4px}
+  .controls{display:flex; gap:8px; margin-top:12px; align-items:center}
+  select, button{padding:8px 10px;border-radius:8px;border:1px solid rgba(0,0,0,0.08); background:white; cursor:pointer}
+  button.primary{background:var(--accent); color:white; border:none}
+  .small{font-size:13px;color:#666}
+  .log{height:200px; overflow:auto; padding:8px; border-radius:8px; background:#fff; border:1px dashed rgba(0,0,0,0.04); margin-top:12px}
+  .tile.ready{box-shadow:0 0 0 4px rgba(255,213,79,0.12)}
+  .center{display:flex;align-items:center;justify-content:center}
+  .footer{font-size:12px;color:#666;margin-top:10px}
+  @media(max-width:880px){.wrap{flex-direction:column}.right{width:100%}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="left">
+    <h1>مزرعتي — Mini Farm</h1>
+    <div class="row status">
+      <div class="chip">💰 <span id="coins">0</span> Coins</div>
+      <div class="chip">⭐ <span id="xp">0</span> XP</div>
+      <div class="chip small">المستوى: <strong id="level">1</strong></div>
+    </div>
+
+    <div class="row">
+      <div class="small">اختر البذرة للزراعة:</div>
+      <select id="seedSelect">
+        <!-- options injected by JS -->
+      </select>
+      <button id="plantBtn" class="primary">زرع</button>
+      <button id="harvestAllBtn">حصاد الكل</button>
+      <button id="resetBtn" style="margin-left:auto">إعادة ضبط</button>
+    </div>
+
+    <div class="grid" id="grid"></div>
+
+    <div class="footer">اضغط على مربع لزرعه أو لحصاد ما إذا كان جاهزًا. اللعبة تحفظ تلقائيًا.</div>
+  </div>
+
+  <div class="right">
+    <h1>قائمة المحاصيل</h1>
+    <div id="cropList" class="small"></div>
+
+    <h1 style="margin-top:14px">المخزن</h1>
+    <button id="toggleStorageBtn">عرض المخزن</button>
+    <div id="storageList" class="small" style="display:none"></div>
+    <button id="sellAllBtn" style="margin-top:6px; display:none">بيع كل المحاصيل</button>
+
+    <h1 style="margin-top:14px">سجل الأحداث</h1>
+    <div id="log" class="log"></div>
+  </div>
+</div>
+
+<script>
+/* ======= Configuration ======= */
+const GRID_ROWS = 5;
+const GRID_COLS = 5;
+const SAVE_KEY = 'mini_farm_v2';
+const CROPS = {
+  wheat: { name:'قمح', emoji:'🌾', growSeconds: 60, cost:5, yield:10, xp:1 },
+  tomato:{ name:'طماطم', emoji:'🍅', growSeconds: 120, cost:10, yield:25, xp:3 },
+  corn:  { name:'ذرة', emoji:'🌽', growSeconds: 300, cost:25, yield:70, xp:7 }
+};
+/* ============================= */
+
+let state = {
+  coins: 50,
+  xp: 0,
+  tiles: [],
+  storage: { wheat:0, tomato:0, corn:0 },
+  lastSave: Date.now()
+};
+
+const gridEl = document.getElementById('grid');
+const coinsEl = document.getElementById('coins');
+const xpEl = document.getElementById('xp');
+const lvlEl = document.getElementById('level');
+const seedSelect = document.getElementById('seedSelect');
+const cropList = document.getElementById('cropList');
+const logEl = document.getElementById('log');
+const plantBtn = document.getElementById('plantBtn');
+const harvestAllBtn = document.getElementById('harvestAllBtn');
+const resetBtn = document.getElementById('resetBtn');
+const toggleStorageBtn = document.getElementById('toggleStorageBtn');
+const storageList = document.getElementById('storageList');
+const sellAllBtn = document.getElementById('sellAllBtn');
+
+function init(){
+  // initialize grid state
+  const saved = localStorage.getItem(SAVE_KEY);
+  if(saved){
+    try {
+      state = JSON.parse(saved);
+    } catch(e){ console.warn('load failed',e); localStorage.removeItem(SAVE_KEY) }
+  }
+  const totalTiles = GRID_ROWS * GRID_COLS;
+  if(!state.tiles || state.tiles.length !== totalTiles){
+    state.tiles = Array(totalTiles).fill(null).map(()=>({ cropId:null, plantedAt:0, readyAt:0 }));
+  }
+  for(const id in CROPS){
+    const opt = document.createElement('option');
+    opt.value = id;
+    opt.textContent = `${CROPS[id].emoji} ${CROPS[id].name} — تكلفة ${CROPS[id].cost}`;
+    seedSelect.appendChild(opt);
+
+    const div = document.createElement('div');
+    div.textContent = `${CROPS[id].emoji} ${CROPS[id].name} — وقت النمو ${CROPS[id].growSeconds}s — محصول ${CROPS[id].yield} Coins`;
+    cropList.appendChild(div);
+  }
+
+  gridEl.innerHTML = '';
+  for(let i=0;i<GRID_ROWS*GRID_COLS;i++){
+    const t = document.createElement('div');
+    t.className = 'tile';
+    t.dataset.index = i;
+    t.onclick = ()=> onTileClick(i);
+    t.innerHTML = `<div class="info" id="info-${i}"></div><div class="soil" id="soil-${i}">🟫</div><div class="progress" id="prog-${i}"></div>`;
+    gridEl.appendChild(t);
+  }
+  attachButtons();
+  refreshUI();
+  refreshStorageUI();
+  startTicker();
+  log('اللعبة جاهزة — لديك ' + state.coins + ' عملات للبدء');
+}
+
+function attachButtons(){
+  plantBtn.onclick = () => {
+    const idx = state.tiles.findIndex(t=>!t.cropId);
+    if(idx === -1){ alert('لا توجد مربعات فارغة.'); return; }
+    plantAt(idx);
+  };
+  harvestAllBtn.onclick = harvestAll;
+  resetBtn.onclick = ()=> { if(confirm('هل تريد إعادة ضبط اللعبة؟')) { resetGame(); } };
+  toggleStorageBtn.onclick = ()=>{
+    const visible = storageList.style.display==='block';
+    storageList.style.display = visible?'none':'block';
+    sellAllBtn.style.display = visible?'none':'inline-block';
+    refreshStorageUI();
+  }
+  sellAllBtn.onclick = ()=>{
+    let totalCoins = 0;
+    for(const id in state.storage){
+      totalCoins += state.storage[id]*CROPS[id].yield;
+      state.storage[id] = 0;
+    }
+    state.coins += totalCoins;
+    log(`تم بيع كل المحاصيل من المخزن +${totalCoins} Coins`);
+    save();
+    refreshUI();
+    refreshStorageUI();
+  }
+}
+
+function plantAt(index){
+  const cropId = seedSelect.value;
+  const crop = CROPS[cropId];
+  if(!crop) return;
+  if(state.tiles[index].cropId) { log('المربع مش فارغ!'); return; }
+  if(state.coins < crop.cost){ alert('ليس لديك ما يكفي من العملات'); return; }
+  const now = Date.now();
+  state.coins -= crop.cost;
+  state.tiles[index] = { cropId, plantedAt: now, readyAt: now + crop.growSeconds*1000 };
+  log(`زرعت ${crop.emoji} ${crop.name} في المربع ${index+1} — جاهز بعد ${crop.growSeconds}s`);
+  save();
+  refreshUI();
+}
+
