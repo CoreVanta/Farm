@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="ar">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mini Farm Top-Down</title>
+<style>
+  :root {
+    --bg: #e0f7fa;
+    --panel: #ffffff;
+    --accent: #4caf50;
+    --tile-bg: #c8e6c9;
+    --building-bg: #ffcc80;
+    font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+  }
+  html, body {margin:0; padding:0; height:100%; background: var(--bg);}
+  .game-container {display:flex; height:100%;}
+  .map {flex:1; position:relative; background:#a7d7a7; overflow:hidden;}
+  .sidebar {width:300px; background: var(--panel); padding:12px; box-shadow:-2px 0 6px rgba(0,0,0,0.1);}
+  h1 {font-size:18px; margin:8px 0;}
+  .field {width:80px; height:80px; background:var(--tile-bg); border:1px solid #999; position:absolute; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:24px; border-radius:8px;}
+  .building {width:100px; height:100px; background:var(--building-bg); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:28px; margin-bottom:12px;}
+  button {padding:4px 8px; border:none; border-radius:6px; margin-left:4px; cursor:pointer;}
+  button.primary {background:var(--accent); color:white;}
+  .log {height:150px; overflow:auto; border:1px dashed rgba(0,0,0,0.1); padding:6px; margin-top:10px; font-size:13px; background:#f9f9f9;}
+  .overlay {position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); display:none; justify-content:center; align-items:center;}
+  .overlay-content {background:white; padding:16px; border-radius:12px; max-width:400px; width:90%; max-height:80%; overflow:auto;}
+  .inventory-item {display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;}
+  .inventory-item input {width:50px; padding:4px;}
+</style>
+</head>
+<body>
+<div class="game-container">
+  <div class="map" id="map"></div>
+  <div class="sidebar">
+    <h1>عملاتك: <span id="coins">0</span> 💰</h1>
+
+    <h1>زرع المحاصيل</h1>
+    <select id="seedSelect"></select>
+    <button id="plantBtn" class="primary">زرع في أول حقل فارغ</button>
+
+    <h1>سجل الأحداث</h1>
+    <div class="log" id="log"></div>
+  </div>
+</div>
+
+<!-- Overlay للمخزن -->
+<div class="overlay" id="storeOverlay">
+  <div class="overlay-content">
+    <h2>المخزن</h2>
+    <div id="storeItems"></div>
+    <button onclick="closeStore()">إغلاق</button>
+  </div>
+</div>
+
+<script>
+// ======== الإعدادات ========
+const MAP_ROWS = 5;
+const MAP_COLS = 5;
+const FIELD_SIZE = 80;
+const CROPS = {
+  wheat: {name:'قمح', emoji:'🌾', growSeconds:10, yield:10},
+  tomato:{name:'طماطم', emoji:'🍅', growSeconds:15, yield:20},
+  corn:{name:'ذرة', emoji:'🌽', growSeconds:20, yield:30}
+};
+let state = {
+  fields: [],
+  inventory: {},
+  coins: 100 // بداية اللعبة
+};
+
+const mapEl = document.getElementById('map');
+const coinsEl = document.getElementById('coins');
+const seedSelect = document.getElementById('seedSelect');
+const plantBtn = document.getElementById('plantBtn');
+const logEl = document.getElementById('log');
+const storeOverlay = document.getElementById('storeOverlay');
+const storeItems = document.getElementById('storeItems');
+
+// ======== تهيئة اللعبة ========
+function init() {
+  // تهيئة الحقول
+  for(let r=0;r<MAP_ROWS;r++){
+    for(let c=0;c<MAP_COLS;c++){
+      const idx = r*MAP_COLS + c;
+      const field = {crop:null, plantedAt:0, readyAt:0};
+      state.fields.push(field);
+
+      const div = document.createElement('div');
+      div.className = 'field';
+      div.style.top = `${r*FIELD_SIZE + 10}px`;
+      div.style.left = `${c*FIELD_SIZE + 10}px`;
+      div.dataset.index = idx;
+      div.onclick = ()=> onFieldClick(idx);
+      mapEl.appendChild(div);
+    }
+  }
+
+  // إضافة مبنى المخزن
+  const store = document.createElement('div');
+  store.className = 'building';
+  store.textContent = '🏠 مخزن';
+  store.style.position = 'absolute';
+  store.style.top = '10px';
+  store.style.left = `${MAP_COLS*FIELD_SIZE + 30}px`;
+  store.onclick = openStore;
+  mapEl.appendChild(store);
+
+  // خيارات البذور
+  for(const id in CROPS){
+    const opt = document.createElement('option');
+    opt.value = id;
+    opt.textContent = `${CROPS[id].emoji} ${CROPS[id].name}`;
+    seedSelect.appendChild(opt);
+    state.inventory[id] = 0;
+  }
+
+  plantBtn.onclick = plantFirstEmpty;
+  refreshUI();
+  setInterval(refreshUI,1000);
+  log('اللعبة جاهزة!');
+}
+
+// ======== المنطق ========
+function onFieldClick(idx){
+  const field = state.fields[idx];
+  if(!field.crop){
+    plantAt(idx);
+  } else {
+    if(Date.now() >= field.readyAt){
+      harvestAt(idx);
+    } else {
+      const remaining = Math.ceil((field.readyAt - Date.now())/1000);
+      alert(`المحصول لم ينضج بعد: ${remaining} ثانية`);
+    }
+  }
+}
+
+function plantFirstEmpty(){
+  const idx = state.fields.findIndex(f=>!f.crop);
+  if(idx===-1){ alert('لا يوجد حقول فارغة'); return; }
+  plantAt(idx);
+}
+
+function plantAt(idx){
+  const cropId = seedSelect.value;
+  const crop = CROPS[cropId];
+  const now = Date.now();
+  state.fields[idx] = {crop:cropId, plantedAt:now, readyAt: now+crop.growSeconds*1000};
+  log(`زرعت ${crop.emoji} ${crop.name} في الحقل ${idx+1}`);
+  refreshUI();
+}
+
+function harvestAt(idx){
+  const field = state.fields[idx];
+  const crop = CROPS[field.crop];
+  state.inventory[field.crop] += crop.yield;
+  log(`حصاد ${crop.emoji} ${crop.name} +${crop.yield} وحدات`);
+  state.fields[idx] = {crop:null, plantedAt:0, readyAt:0};
+  refreshUI();
+}
+
+function refreshUI(){
+  // تحديث الحقول
+  state.fields.forEach((f,i)=>{
+    const div = mapEl.querySelector(`.field[data-index='${i}']`);
+    if(!f.crop) { div.textContent=''; div.style.backgroundColor='#c8e6c9'; }
+    else {
+      const crop = CROPS[f.crop];
+      if(Date.now()>=f.readyAt) div.textContent=crop.emoji;
+      else div.textContent=crop.emoji+'⌛';
+      div.style.backgroundColor='#81c784';
+    }
+  });
+  // تحديث العملات
+  coinsEl.textContent = state.coins;
+}
+
+// ======== المخزن ========
+function openStore(){
+  storeOverlay.style.display='flex';
+  renderStore();
+}
+
+function closeStore(){ storeOverlay.style.display='none'; }
+
+function renderStore(){
+  storeItems.innerHTML='';
+  for(const id in state.inventory){
+    const qty = state.inventory[id];
+    if(qty<=0) continue;
+    const div = document.createElement('div');
+    div.className='inventory-item';
+    div.innerHTML = `
+      <span>${CROPS[id].emoji} ${CROPS[id].name}: ${qty}</span>
+      <span>
+        <input type="number" min="1" max="${qty}" value="1" id="sell-${id}">
+        <button onclick="sellCrop('${id}')">بيع</button>
+      </span>
+    `;
+    storeItems.appendChild(div);
+  }
+}
+
+function sellCrop(id){
+  const input = document.getElementById(`sell-${id}`);
+  let qty = parseInt(input.value);
+  if(isNaN(qty)||qty<=0) return;
+  if(qty>state.inventory[id]) qty=state.inventory[id];
+  const pricePerUnit = CROPS[id].yield; // نستخدم قيمة المحصول كالسعر
+  const total = pricePerUnit * qty;
+  state.inventory[id] -= qty;
+  state.coins += total;
+  log(`تم بيع ${qty} من ${CROPS[id].emoji} ${CROPS[id].name} مقابل ${total} 💰`);
+  renderStore();
+  refreshUI();
+}
+
+function log(text){
+  const p = document.createElement('div');
+  p.textContent = `[${new Date().toLocaleTimeString()}] ${text}`;
+  logEl.prepend(p);
+}
+
+init();
+</script>
+</body>
+</html>
