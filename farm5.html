@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="ar">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mini Farm Top-Down</title>
+<style>
+  :root {
+    --bg: #e0f7fa;
+    --panel: #ffffff;
+    --accent: #4caf50;
+    --tile-bg: #c8e6c9;
+    --building-bg: #ffcc80;
+    font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+  }
+  html, body {margin:0; padding:0; height:100%; background: var(--bg);}
+  .game-container {display:flex; height:100%;}
+  .map {flex:1; position:relative; background:#a7d7a7; overflow:hidden;}
+  .sidebar {width:300px; background: var(--panel); padding:12px; box-shadow:-2px 0 6px rgba(0,0,0,0.1);}
+  h1 {font-size:18px; margin:8px 0;}
+  .field {width:80px; height:80px; background:var(--tile-bg); border:1px solid #999; position:absolute; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:24px; border-radius:8px;}
+  .building {width:100px; height:100px; background:var(--building-bg); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:28px; margin-bottom:12px;}
+  button {padding:8px 12px; border:none; border-radius:8px; margin-top:6px; cursor:pointer;}
+  button.primary {background:var(--accent); color:white;}
+  .log {height:150px; overflow:auto; border:1px dashed rgba(0,0,0,0.1); padding:6px; margin-top:10px; font-size:13px; background:#f9f9f9;}
+  .inventory div {margin-bottom:6px;}
+</style>
+</head>
+<body>
+<div class="game-container">
+  <div class="map" id="map"></div>
+  <div class="sidebar">
+    <h1>المخزن</h1>
+    <div class="inventory" id="inventory"></div>
+
+    <h1>زرع المحاصيل</h1>
+    <select id="seedSelect"></select>
+    <button id="plantBtn" class="primary">زرع في أول حقل فارغ</button>
+
+    <h1>سجل الأحداث</h1>
+    <div class="log" id="log"></div>
+  </div>
+</div>
+
+<script>
+// ======== الإعدادات ========
+const MAP_ROWS = 5;
+const MAP_COLS = 5;
+const FIELD_SIZE = 80;
+const CROPS = {
+  wheat: {name:'قمح', emoji:'🌾', growSeconds:10, yield:10},
+  tomato:{name:'طماطم', emoji:'🍅', growSeconds:15, yield:20},
+  corn:{name:'ذرة', emoji:'🌽', growSeconds:20, yield:30}
+};
+let state = {
+  fields: [],
+  inventory: {}
+};
+
+const mapEl = document.getElementById('map');
+const inventoryEl = document.getElementById('inventory');
+const seedSelect = document.getElementById('seedSelect');
+const plantBtn = document.getElementById('plantBtn');
+const logEl = document.getElementById('log');
+
+// ======== تهيئة اللعبة ========
+function init() {
+  // تهيئة الحقول
+  for(let r=0;r<MAP_ROWS;r++){
+    for(let c=0;c<MAP_COLS;c++){
+      const idx = r*MAP_COLS + c;
+      const field = {crop:null, plantedAt:0, readyAt:0};
+      state.fields.push(field);
+
+      const div = document.createElement('div');
+      div.className = 'field';
+      div.style.top = `${r*FIELD_SIZE + 10}px`;
+      div.style.left = `${c*FIELD_SIZE + 10}px`;
+      div.dataset.index = idx;
+      div.onclick = ()=> onFieldClick(idx);
+      mapEl.appendChild(div);
+    }
+  }
+
+  // أضف المباني (مخزن)
+  const store = document.createElement('div');
+  store.className = 'building';
+  store.textContent = '🏠 مخزن';
+  store.style.position = 'absolute';
+  store.style.top = '10px';
+  store.style.left = `${MAP_COLS*FIELD_SIZE + 30}px`;
+  mapEl.appendChild(store);
+
+  // خيارات البذور
+  for(const id in CROPS){
+    const opt = document.createElement('option');
+    opt.value = id;
+    opt.textContent = `${CROPS[id].emoji} ${CROPS[id].name}`;
+    seedSelect.appendChild(opt);
+    state.inventory[id] = 0;
+  }
+
+  plantBtn.onclick = plantFirstEmpty;
+  refreshUI();
+  setInterval(refreshUI,1000);
+  log('اللعبة جاهزة!');
+}
+
+// ======== المنطق ========
+function onFieldClick(idx){
+  const field = state.fields[idx];
+  if(!field.crop){
+    plantAt(idx);
+  } else {
+    if(Date.now() >= field.readyAt){
+      harvestAt(idx);
+    } else {
+      const remaining = Math.ceil((field.readyAt - Date.now())/1000);
+      alert(`المحصول لم ينضج بعد: ${remaining} ثانية`);
+    }
+  }
+}
+
+function plantFirstEmpty(){
+  const idx = state.fields.findIndex(f=>!f.crop);
+  if(idx===-1){ alert('لا يوجد حقول فارغة'); return; }
+  plantAt(idx);
+}
+
+function plantAt(idx){
+  const cropId = seedSelect.value;
+  const crop = CROPS[cropId];
+  const now = Date.now();
+  state.fields[idx] = {crop:cropId, plantedAt:now, readyAt: now+crop.growSeconds*1000};
+  log(`زرعت ${crop.emoji} ${crop.name} في الحقل ${idx+1}`);
+  refreshUI();
+}
+
+function harvestAt(idx){
+  const field = state.fields[idx];
+  const crop = CROPS[field.crop];
+  state.inventory[field.crop] += crop.yield;
+  log(`حصاد ${crop.emoji} ${crop.name} +${crop.yield} وحدات`);
+  state.fields[idx] = {crop:null, plantedAt:0, readyAt:0};
+  refreshUI();
+}
+
+function refreshUI(){
+  // تحديث الحقول
+  state.fields.forEach((f,i)=>{
+    const div = mapEl.querySelector(`.field[data-index='${i}']`);
+    if(!f.crop) { div.textContent=''; div.style.backgroundColor='#c8e6c9'; }
+    else {
+      const crop = CROPS[f.crop];
+      if(Date.now()>=f.readyAt) div.textContent=crop.emoji;
+      else div.textContent=crop.emoji+'⌛';
+      div.style.backgroundColor='#81c784';
+    }
+  });
+
+  // تحديث المخزن
+  inventoryEl.innerHTML = '';
+  for(const id in state.inventory){
+    const div = document.createElement('div');
+    div.textContent = `${CROPS[id].emoji} ${CROPS[id].name}: ${state.inventory[id]}`;
+    inventoryEl.appendChild(div);
+  }
+}
+
+function log(text){
+  const p = document.createElement('div');
+  p.textContent = `[${new Date().toLocaleTimeString()}] ${text}`;
+  logEl.prepend(p);
+}
+
+init();
+</script>
+</body>
+</html>
