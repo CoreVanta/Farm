@@ -242,9 +242,11 @@ function log(text){
 // ======= Store =======
 function renderStore(){
   storeItems.innerHTML='';
+  let hasItems = false;
   for(const id in state.inventory){
     const qty = state.inventory[id];
     if(qty>0){
+      hasItems = true;
       const crop = CROPS[id];
       const div = document.createElement('div');
       div.innerHTML=`
@@ -256,6 +258,9 @@ function renderStore(){
       `;
       storeItems.appendChild(div);
     }
+  }
+  if(!hasItems){
+    storeItems.innerHTML='<p>المخزن فارغ</p>';
   }
 }
 
