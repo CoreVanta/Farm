@@ -1,142 +1,142 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ameterium - Dawn of a New Economy</title>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
-<style>
-  * {margin:0; padding:0; box-sizing:border-box;}
-  body {
-    background-color: black;
-    color: white;
-    font-family: 'Cairo', sans-serif;
-    overflow: hidden;
-  }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ameterium - Dawn of a New Economy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Cairo', sans-serif;
+    }
 
-  /* خلفية المشهد */
-  #scene {
-    position: relative;
-    width: 100%;
-    height: 100vh;
-    background: black;
-    overflow: hidden;
-  }
+    body {
+      background-color: #000;
+      color: #fff;
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      text-align: center;
+    }
 
-  /* النص السردي */
-  #narration {
-    position: absolute;
-    bottom: 10%;
-    width: 100%;
-    text-align: center;
-    font-size: 1.5rem;
-    color: #fff;
-    padding: 0 10%;
-    z-index: 9999; /* أعلى من كل شيء */
-    text-shadow: 0 0 15px rgba(255,255,255,0.8);
-  }
+    .title {
+      position: relative;
+      top: 5vh;
+      font-size: 2rem;
+      font-weight: 700;
+      color: #ffd700;
+      text-shadow: 0 0 10px #ffd700aa;
+      animation: fadeIn 2s ease-in-out forwards;
+    }
 
-  /* تأثير الكتابة حرف بحرف */
-  .hidden {
-    visibility: hidden;
-  }
+    .story-container {
+      flex-grow: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 90%;
+      max-width: 900px;
+    }
 
-  @media (max-width: 768px) {
-    #narration { font-size: 1.1rem; bottom: 15%; }
-  }
+    .story-text {
+      font-size: 1.3rem;
+      line-height: 2.2rem;
+      color: #eee;
+      text-shadow: 0 0 10px #000;
+      opacity: 0;
+      animation: fadeIn 1s ease forwards;
+      white-space: pre-wrap;
+      word-break: break-word;
+      z-index: 5;
+    }
 
-  @media (max-width: 480px) {
-    #narration { font-size: 1rem; bottom: 18%; }
-  }
+    .buttons {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin-bottom: 5vh;
+      opacity: 0;
+    }
 
-  /* الزرّان */
-  .choice-buttons {
-    display: none;
-    position: absolute;
-    bottom: 10%;
-    width: 100%;
-    text-align: center;
-    z-index: 10000;
-  }
+    button {
+      background: transparent;
+      border: 2px solid #ffd700;
+      color: #ffd700;
+      padding: 10px 25px;
+      font-size: 1.2rem;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
 
-  .choice-buttons button {
-    font-family: 'Cairo', sans-serif;
-    margin: 10px;
-    padding: 12px 30px;
-    font-size: 1.2rem;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.3s;
-  }
+    button:hover {
+      background: #ffd700;
+      color: #000;
+    }
 
-  .choice-buttons button:first-child {
-    background-color: #0077ff;
-    color: white;
-  }
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
 
-  .choice-buttons button:last-child {
-    background-color: #ff6600;
-    color: white;
-  }
+    @keyframes typewriter {
+      from { width: 0; }
+      to { width: 100%; }
+    }
 
-  .choice-buttons button:hover {
-    transform: scale(1.05);
-  }
-</style>
+    @media (max-width: 768px) {
+      .title { font-size: 1.6rem; }
+      .story-text { font-size: 1.1rem; line-height: 1.8rem; }
+      button { font-size: 1rem; padding: 8px 20px; }
+    }
+  </style>
 </head>
 <body>
 
-<div id="scene">
-  <div id="narration"></div>
-  <div class="choice-buttons" id="choices">
+  <div class="title">أميتريوم - فجر الاقتصاد الجديد</div>
+
+  <div class="story-container">
+    <div class="story-text" id="storyText"></div>
+  </div>
+
+  <div class="buttons" id="choiceButtons">
     <button>🔹 انضم إلى أميتريوم</button>
     <button>🔸 شاهد النظام القديم ينهار</button>
   </div>
-</div>
 
-<script>
-const scenes = [
-  { text: "أميتريوم - فجر الاقتصاد الجديد", duration: 4000 },
-  { text: "العالم اليوم... ليس كما كان.", duration: 3000 },
-  { text: "لعقودٍ طويلة، سيطر على الاقتصاد حفنة من الصفوة، امتلكوا المصارف، والموارد، والإعلام...", duration: 5000 },
-  { text: "ازدهرت ثرواتهم بينما غرق الملايين في الديون، حتى صار الإنسان رقماً في نظام لا يرحم.", duration: 5000 },
-  { text: "ومع تصاعد الغضب، ظهرت فكرة جديدة... من إيمانٍ بأن المال يجب أن يخدم البشر، لا أن يستعبدهم.", duration: 5000 },
-  { text: "هكذا وُلد مجلس أميتريوم — اقتصاد عادل يُكافئ العمل لا النفوذ.", duration: 5000 },
-  { text: "والآن... بدأت الثورة الاقتصادية. هل ستنضم إلى أميتريوم؟", duration: 5000 }
-];
+  <script>
+    const storyText = document.getElementById("storyText");
+    const buttons = document.getElementById("choiceButtons");
 
-let index = 0;
-const narration = document.getElementById("narration");
+    const story = [
+      "العالم اليوم... ليس كما كان.\n\nلعقودٍ طويلة، سيطر على الاقتصاد حفنة من الصفوة، امتلكوا المصارف، والموارد، والإعلام... وحتى القرارات التي تحدد مصير الشعوب.\n\nازدهرت ثرواتهم بينما غرق الملايين في الديون، حتى صار الإنسان رقماً في معادلةٍ لا يفهمها، وأسيـراً لنظامٍ ماليٍ لا يرحم الضعفاء.\n\nومع تصاعد الغضب، ظهرت فكرة جديدة... لم تولد من طمعٍ أو سلطة، بل من إيمانٍ بأن المال يجب أن يخدم البشر، لا أن يستعبدهم.\n\nهكذا وُلد مجلس أميتريوم — حركة عالمية تسعى لإعادة التوازن، لخلق اقتصادٍ عادلٍ يُكافئ الإنتاج لا النفوذ، حيث تُقاس القيمة بالعمل، لا بالحسابات السرية في البنوك.\n\nوالآن... بدأت الثورة الاقتصادية.\nأنت أمام خيارٍ مصيري:\nأن تبقى تابعًا للنظام القديم...\nأم تنضم إلى أميتريوم، وتصبح جزءًا من فجرٍ جديد للبشرية."
+    ];
 
-function typeWriter(text, callback) {
-  narration.innerHTML = "";
-  let i = 0;
-  function typing() {
-    if (i < text.length) {
-      narration.innerHTML += text.charAt(i);
-      i++;
-      setTimeout(typing, 60);
-    } else if (callback) callback();
-  }
-  typing();
-}
+    let i = 0, char = 0;
+    const speed = 40;
 
-function showScene() {
-  if (index < scenes.length) {
-    typeWriter(scenes[index].text, () => {
-      setTimeout(() => {
-        index++;
-        showScene();
-      }, scenes[index].duration);
-    });
-  } else {
-    document.getElementById("choices").style.display = "block";
-  }
-}
+    function typeWriter() {
+      if (char < story[i].length) {
+        storyText.textContent += story[i].charAt(char);
+        storyText.style.opacity = 1;
+        char++;
+        setTimeout(typeWriter, speed);
+      } else {
+        setTimeout(() => {
+          buttons.style.opacity = 1;
+          buttons.style.transition = "opacity 2s ease-in";
+        }, 1000);
+      }
+    }
 
-showScene();
-</script>
-
+    window.onload = () => {
+      setTimeout(typeWriter, 1000);
+    };
+  </script>
 </body>
 </html>
