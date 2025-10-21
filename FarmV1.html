@@ -18,7 +18,7 @@
     position: relative;
     width: 100%;
     height: 100vh;
-    background-image: url('farm_background.jpg'); /* الخلفية الافتراضية */
+    background-image: url('farm_background.jpg');
     background-size: cover;
     background-position: center;
   }
@@ -46,8 +46,7 @@
     font-size: 20px;
     line-height: 1.6;
     box-shadow: 0 0 15px #00ffcc55;
-    overflow-y: auto; /* يجعل المربع قابل للتمرير عند زيادة النص */
-    scroll-behavior: smooth;
+    overflow-y: auto;
   }
 
   .dialogue-text {
@@ -106,19 +105,21 @@ const text = `
 `;
 
 let i = 0;
-const speed = 35; // سرعة الكتابة (كلما قل الرقم زادت السرعة)
+const speed = 35;
 const dialogueText = document.getElementById("dialogueText");
 const dialogueBox = document.getElementById("dialogueBox");
 
+// عرض النص حرفاً بحرف داخل المربع مع بقاء التمرير مضبوطاً
 function typeWriter() {
   if (i < text.length) {
     dialogueText.textContent += text.charAt(i);
     i++;
-    dialogueBox.scrollTop = dialogueBox.scrollHeight; // يجبر المربع على التمرير للأسفل تلقائياً
+    dialogueBox.scrollTop = dialogueBox.scrollHeight;
     setTimeout(typeWriter, speed);
   }
 }
 
+// بدء الكتابة عند تحميل الصفحة
 window.onload = typeWriter;
 </script>
 
