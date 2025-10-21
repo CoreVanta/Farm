@@ -1,604 +1,142 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>أميتريوم — فجر الاقتصاد الجديد (الافتتاح)</title>
-
-<!-- Cairo font -->
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;800&display=swap" rel="stylesheet">
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ameterium - Dawn of a New Economy</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --bg-black: #000004;
-    --cold-gray: #8b93a0;
-    --gold: #f6c85f;
-    --soft-gold: rgba(246,200,95,0.12);
-    --am-blue: #87d0ff;
-    --accent: #7dd3fc;
-    --muted: rgba(255,255,255,0.65);
-  }
-  *{box-sizing:border-box}
-  html,body{height:100%;margin:0}
-  body{
-    font-family:"Cairo",system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
-    background:var(--bg-black);
-    color:#fff;
-    -webkit-font-smoothing:antialiased;
-    -moz-osx-font-smoothing:grayscale;
-    overflow:hidden;
+  * {margin:0; padding:0; box-sizing:border-box;}
+  body {
+    background-color: black;
+    color: white;
+    font-family: 'Cairo', sans-serif;
+    overflow: hidden;
   }
 
-  /* full-screen stage */
-  .stage{
-    position:relative;
-    width:100%;
-    height:100vh;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    background:linear-gradient(180deg,#000 0%, #040714 60%, #061014 100%);
+  /* خلفية المشهد */
+  #scene {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    background: black;
+    overflow: hidden;
   }
 
-  /* central logo/title */
-  .logo-wrap{
-    position:absolute;
-    top:50%;
-    left:50%;
-    transform:translate(-50%,-50%) scale(1);
-    text-align:center;
-    z-index:60;
-    pointer-events:none;
-  }
-  .logo-main{
-    font-weight:800;
-    font-size:clamp(20px,6vw,54px);
-    letter-spacing:1px;
-    color:transparent;
-    background:linear-gradient(90deg,#fff,#ffd166 40%, #fff);
-    -webkit-background-clip:text;
-    background-clip:text;
-    text-shadow:0 8px 40px rgba(0,0,0,0.6);
-    opacity:0;
-    transform:translateY(12px);
-    transition:all 900ms ease;
-  }
-  .logo-sub{
-    margin-top:8px;
-    font-weight:600;
-    font-size:clamp(12px,2.2vw,18px);
-    color:var(--muted);
-    opacity:0;
-    transform:translateY(8px);
-    transition:all 900ms ease;
-  }
-  .logo-wrap.show .logo-main{ opacity:1; transform:none; filter: drop-shadow(0 8px 18px rgba(246,200,95,0.12)); }
-  .logo-wrap.show .logo-sub{ opacity:1; transform:none; }
-
-  /* background scene layers */
-  .scene-layers{
-    position:absolute; inset:0; z-index:10; overflow:hidden;
+  /* النص السردي */
+  #narration {
+    position: absolute;
+    bottom: 10%;
+    width: 100%;
+    text-align: center;
+    font-size: 1.5rem;
+    color: #fff;
+    padding: 0 10%;
+    z-index: 9999; /* أعلى من كل شيء */
+    text-shadow: 0 0 15px rgba(255,255,255,0.8);
   }
 
-  /* layer: black -> city silhouettes (SVG) */
-  .city {
-    position:absolute; inset:0;
-    display:flex;
-    align-items:flex-end;
-    justify-content:center;
-    pointer-events:none;
-  }
-  .city svg{ width:120%; height:auto; transform-origin:center bottom; opacity:0.95; }
-
-  /* overlay for color transitions */
-  .color-overlay{
-    position:absolute; inset:0; z-index:20; pointer-events:none;
-    background: linear-gradient(180deg, rgba(0,0,0,0.65), rgba(0,0,0,0.25));
-    transition: background 1000ms ease;
+  /* تأثير الكتابة حرف بحرف */
+  .hidden {
+    visibility: hidden;
   }
 
-  /* decorative animated data-lines (subtle) */
-  .data-lines{
-    position:absolute; inset:0; z-index:22; pointer-events:none;
-  }
-  .line {
-    position:absolute; height:1px; background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.08));
-    opacity:0;
-    transform:translateX(-6%);
-  }
-  /* will animate into view */
-
-  /* narrator text area (bottom) */
-  .narration {
-    position:absolute;
-    left:50%;
-    bottom:6%;
-    transform:translateX(-50%);
-    width:min(1100px,94%);
-    max-width:1100px;
-    z-index:80;
-    text-align:center;
-    padding:18px 20px;
-    pointer-events:auto;
-  }
-  .narration-box{
-    display:inline-block;
-    background: linear-gradient(180deg, rgba(0,0,0,0.45), rgba(0,0,0,0.28));
-    border-radius:12px;
-    padding:18px 22px;
-    min-width:300px;
-    color: #e8f2ff;
-    box-shadow: 0 10px 40px rgba(2,6,23,0.6), inset 0 1px 0 rgba(255,255,255,0.02);
-    backdrop-filter: blur(6px) saturate(1.1);
-  }
-  .narration p{ margin:0; font-size:clamp(14px,1.6vw,18px); line-height:1.7; opacity:0; transform:translateY(10px); transition:all 520ms ease; max-width:900px; }
-  .narration p.visible{ opacity:1; transform:none; }
-
-  /* special market visuals (red/flash) */
-  .market-flash{
-    position:absolute; inset:0; z-index:30; pointer-events:none;
-    mix-blend-mode:screen; opacity:0;
-    transition:opacity 300ms ease;
+  @media (max-width: 768px) {
+    #narration { font-size: 1.1rem; bottom: 15%; }
   }
 
-  /* glowing A emblem reveal */
-  .emblem {
-    position:absolute;
-    left:50%;
-    top:20%;
-    transform:translateX(-50%) scale(0.8);
-    z-index:50;
-    opacity:0;
-    pointer-events:none;
-  }
-  .emblem svg{ width:120px; height:120px; filter: drop-shadow(0 12px 40px rgba(124,58,237,0.12)); }
-  .emblem.show{ opacity:1; transform:translateX(-50%) scale(1); transition:all 700ms cubic-bezier(.2,.9,.2,1); }
-
-  /* ending CTA buttons */
-  .cta {
-    position:absolute;
-    left:50%;
-    bottom:6%;
-    transform:translateX(-50%);
-    z-index:90;
-    display:flex;
-    gap:12px;
-    opacity:0;
-    transition:opacity 520ms ease 50ms;
-    pointer-events:none;
-  }
-  .cta.show{ opacity:1; pointer-events:auto; }
-  .btn {
-    font-family:"Cairo",sans-serif;
-    border:0; cursor:pointer; padding:14px 18px; border-radius:12px; font-weight:700;
-    box-shadow:0 10px 30px rgba(2,6,23,0.6);
-  }
-  .btn.join{ background:linear-gradient(90deg,#2fb36a,#1f8f5a); color:white; }
-  .btn.watch{ background:transparent; border:1px solid rgba(255,255,255,0.08); color:var(--muted); }
-
-  /* small audio hint */
-  .audio-hint{
-    position:absolute; right:18px; top:18px; z-index:95;
-    font-size:13px; color:var(--muted); opacity:0.9;
+  @media (max-width: 480px) {
+    #narration { font-size: 1rem; bottom: 18%; }
   }
 
-  /* responsive adjustments */
-  @media (max-width:720px){
-    .logo-main{ font-size:28px }
-    .emblem svg{ width:88px;height:88px }
-    .narration p{ font-size:15px }
-    .cta{ flex-direction:column; bottom:4% }
-    .btn{ width:230px; font-size:16px }
+  /* الزرّان */
+  .choice-buttons {
+    display: none;
+    position: absolute;
+    bottom: 10%;
+    width: 100%;
+    text-align: center;
+    z-index: 10000;
+  }
+
+  .choice-buttons button {
+    font-family: 'Cairo', sans-serif;
+    margin: 10px;
+    padding: 12px 30px;
+    font-size: 1.2rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .choice-buttons button:first-child {
+    background-color: #0077ff;
+    color: white;
+  }
+
+  .choice-buttons button:last-child {
+    background-color: #ff6600;
+    color: white;
+  }
+
+  .choice-buttons button:hover {
+    transform: scale(1.05);
   }
 </style>
 </head>
 <body>
-  <div class="stage" id="stage">
 
-    <!-- layered visuals -->
-    <div class="scene-layers" aria-hidden="true">
-      <div class="city" id="cityLayer">
-        <!-- stylized SVG skyline (monochrome, will colorize via CSS/JS) -->
-        <svg viewBox="0 0 1600 360" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <defs>
-            <linearGradient id="g1" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0" stop-color="#bfc8d7" stop-opacity="0.12"/>
-              <stop offset="1" stop-color="#6b7280" stop-opacity="0.08"/>
-            </linearGradient>
-          </defs>
-          <rect x="0" y="0" width="1600" height="360" fill="url(#g1)"/>
-          <!-- skyline silhouettes -->
-          <g id="skyline" fill="#c6cbd6" transform="translate(0,20)">
-            <!-- simple buildings -->
-            <rect x="40" y="120" width="60" height="220" rx="2" />
-            <rect x="120" y="80" width="90" height="260" rx="2" />
-            <rect x="220" y="140" width="42" height="200" rx="2" />
-            <rect x="280" y="40" width="120" height="300" rx="2" />
-            <rect x="420" y="100" width="80" height="240" rx="2" />
-            <rect x="520" y="30" width="160" height="310" rx="2" />
-            <rect x="720" y="90" width="120" height="250" rx="2" />
-            <rect x="860" y="70" width="70" height="270" rx="2" />
-            <rect x="950" y="130" width="48" height="210" rx="2" />
-            <rect x="1010" y="60" width="140" height="280" rx="2" />
-            <rect x="1180" y="110" width="90" height="230" rx="2" />
-            <rect x="1288" y="40" width="200" height="300" rx="2" />
-            <rect x="1500" y="120" width="60" height="200" rx="2" />
-          </g>
-        </svg>
-      </div>
-
-      <!-- color overlay (changes from gray -> blue/gold) -->
-      <div class="color-overlay" id="colorOverlay"></div>
-
-      <!-- animated data lines -->
-      <div class="data-lines" id="dataLines" aria-hidden="true">
-        <!-- dynamic lines will be inserted via JS -->
-      </div>
-
-      <!-- market flash layer -->
-      <canvas id="marketFlash" class="market-flash"></canvas>
-
-      <!-- emblem (A) hidden until reveal -->
-      <div class="emblem" id="emblem" aria-hidden="true">
-        <!-- A emblem SVG -->
-        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <defs>
-            <linearGradient id="ag" x1="0" x2="1">
-              <stop offset="0" stop-color="#7dd3fc"/>
-              <stop offset="1" stop-color="#ffd166"/>
-            </linearGradient>
-            <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur stdDeviation="8" result="blur"/>
-              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-            </filter>
-          </defs>
-          <circle cx="100" cy="100" r="80" fill="url(#ag)" opacity="0.14"/>
-          <text x="50%" y="54%" text-anchor="middle" font-size="78" font-weight="800" fill="#fff" font-family="Cairo, sans-serif" filter="url(#glow)">A</text>
-        </svg>
-      </div>
-    </div>
-
-    <!-- central logo (appears at start and end) -->
-    <div class="logo-wrap" id="logoWrap" aria-hidden="true">
-      <div class="logo-main">أميتريوم - فجر الاقتصاد الجديد</div>
-      <div class="logo-sub">AMETERIUM – Dawn of a New Economy</div>
-    </div>
-
-    <!-- narration text -->
-    <div class="narration" aria-live="polite">
-      <div class="narration-box" id="narrationBox">
-        <!-- paragraphs inserted by JS in sequence -->
-        <p class="line" id="n1"></p>
-        <p class="line" id="n2"></p>
-        <p class="line" id="n3"></p>
-        <p class="line" id="n4"></p>
-        <p class="line" id="n5"></p>
-        <p class="line" id="n6"></p>
-        <p class="line" id="n7"></p>
-      </div>
-    </div>
-
-    <!-- CTA buttons (hidden until end) -->
-    <div class="cta" id="cta">
-      <button class="btn join" id="joinBtn">انضم إلى أميتريوم</button>
-      <button class="btn watch" id="watchBtn">شاهد النظام القديم ينهار</button>
-    </div>
-
-    <!-- small audio hint -->
-    <div class="audio-hint" id="audioHint">اضغط على أي مكان لتشغيل الصوت (اختياري)</div>
-
+<div id="scene">
+  <div id="narration"></div>
+  <div class="choice-buttons" id="choices">
+    <button>🔹 انضم إلى أميتريوم</button>
+    <button>🔸 شاهد النظام القديم ينهار</button>
   </div>
+</div>
 
 <script>
-/*
-  This script implements the exact scenario timings and visuals.
-  - Text lines appear according to the timestamps in the scenario.
-  - Visual transitions: city grayscale -> gold/blue, emblem reveal, market flash.
-  - Simple WebAudio pulses / ambient tones start after first user interaction.
-  - CTA buttons appear at the end (2:30-3:00) and are interactive (dispatch events).
-*/
-
-// --- TIMINGS (ms) mapped from scenario time windows ---
-// base start at when we call startSequence()
-const TIMINGS = {
-  logoAppear: 0 + 1000,          // 0:00 - show logo gradually during first 10s (we start fade-in)
-  narratorStart: 10000,         // 0:10 - first narration line
-  line2: 10000 + 2500,          // 0:10 - 0:35 -> show subsequent lines (we space)
-  line3: 10000 + 6500,          // 0:35 - 1:10
-  line4: 10000 + 11000,         // 1:10 - 1:35
-  line5: 10000 + 15200,         // 1:35 - 2:00 (idea/flash)
-  line6: 10000 + 18800,         // 2:00 - 2:30
-  line7: 10000 + 22000,         // 2:30 - 3:00
-  emblemReveal: 10000 + 15000,  // reveal emblem near 1:35-2:00 moment
-  colorShiftStart: 10000 + 18800,// color shift at 2:00
-  marketCrashStart: 10000 + 7000, // crash effects around 1:10 - 1:35
-  CTAShow: 10000 + 23000       // show CTA ~2:30-3:00
-};
-
-// Narration strings exactly as in the scenario (Arabic text preserved)
-const narration = [
-  // n1 (0:10 - 0:35)
-  'العالم اليوم... ليس كما كان.',
-  // n2 (0:35 - 1:10)
-  'لعقودٍ طويلة، سيطر على الاقتصاد حفنة من الصفوة،\nامتلكوا المصارف، والموارد، والإعلام... وحتى القرارات التي تحدد مصير الشعوب.',
-  // n3 (1:10 - 1:35)
-  'ازدهرت ثرواتهم بينما غرق الملايين في الديون،\nحتى صار الإنسان رقمًا في معادلةٍ لا يفهمها،\nوأسيـراً لنظامٍ ماليٍ لا يرحم الضعفاء.',
-  // n4 (1:35 - 2:00)
-  'ومع تصاعد الغضب، ظهرت فكرة جديدة...\nلم تولد من طمعٍ أو سلطة، بل من إيمانٍ بأن المال يجب أن يخدم البشر، لا أن يستعبدهم.',
-  // n5 (2:00 - 2:30)
-  'هكذا وُلد مجلس أميتريوم — حركة عالمية تسعى لإعادة التوازن،\nلخلق اقتصادٍ عادلٍ يُكافئ الإنتاج لا النفوذ،\nحيث تُقاس القيمة بالعمل، لا بالحسابات السرية في البنوك.',
-  // n6 (2:30 - 3:00)
-  'والآن... بدأت الثورة الاقتصادية.\nأنت أمام خيارٍ مصيري:\nأن تبقى تابعًا للنظام القديم...\nأم تنضم إلى أميتريوم، وتصبح جزءًا من فجرٍ جديد للبشرية.',
-  // final english title line shown before CTAs
-  'AMETERIUM – Dawn of a New Economy'
+const scenes = [
+  { text: "أميتريوم - فجر الاقتصاد الجديد", duration: 4000 },
+  { text: "العالم اليوم... ليس كما كان.", duration: 3000 },
+  { text: "لعقودٍ طويلة، سيطر على الاقتصاد حفنة من الصفوة، امتلكوا المصارف، والموارد، والإعلام...", duration: 5000 },
+  { text: "ازدهرت ثرواتهم بينما غرق الملايين في الديون، حتى صار الإنسان رقماً في نظام لا يرحم.", duration: 5000 },
+  { text: "ومع تصاعد الغضب، ظهرت فكرة جديدة... من إيمانٍ بأن المال يجب أن يخدم البشر، لا أن يستعبدهم.", duration: 5000 },
+  { text: "هكذا وُلد مجلس أميتريوم — اقتصاد عادل يُكافئ العمل لا النفوذ.", duration: 5000 },
+  { text: "والآن... بدأت الثورة الاقتصادية. هل ستنضم إلى أميتريوم؟", duration: 5000 }
 ];
 
-// DOM refs
-const logoWrap = document.getElementById('logoWrap');
-const colorOverlay = document.getElementById('colorOverlay');
-const emblem = document.getElementById('emblem');
-const narrationEls = [
-  document.getElementById('n1'),
-  document.getElementById('n2'),
-  document.getElementById('n3'),
-  document.getElementById('n4'),
-  document.getElementById('n5'),
-  document.getElementById('n6'),
-  document.getElementById('n7')
-];
-const dataLinesContainer = document.getElementById('dataLines');
-const marketCanvas = document.getElementById('marketFlash');
-const cta = document.getElementById('cta');
-const joinBtn = document.getElementById('joinBtn');
-const watchBtn = document.getElementById('watchBtn');
-const audioHint = document.getElementById('audioHint');
+let index = 0;
+const narration = document.getElementById("narration");
 
-// create subtle data lines
-function createDataLines(){
-  const w = window.innerWidth;
-  const h = window.innerHeight;
-  for(let i=0;i<12;i++){
-    const el = document.createElement('div');
-    el.className = 'line';
-    el.style.width = (40 + Math.random()*60)+'%';
-    el.style.left = (Math.random()*100)+'%';
-    el.style.top = (10 + Math.random()*80)+'%';
-    el.style.opacity = 0;
-    el.style.transform = 'translateX(-6%)';
-    dataLinesContainer.appendChild(el);
-    // animate them in later
-    setTimeout(()=> {
-      el.style.opacity = 1;
-      el.style.transform = 'translateX(0)';
-      el.style.transition = `all ${1200 + Math.random()*1400}ms cubic-bezier(.2,.9,.2,1)`;
-    }, 1200 + i*80);
+function typeWriter(text, callback) {
+  narration.innerHTML = "";
+  let i = 0;
+  function typing() {
+    if (i < text.length) {
+      narration.innerHTML += text.charAt(i);
+      i++;
+      setTimeout(typing, 60);
+    } else if (callback) callback();
+  }
+  typing();
+}
+
+function showScene() {
+  if (index < scenes.length) {
+    typeWriter(scenes[index].text, () => {
+      setTimeout(() => {
+        index++;
+        showScene();
+      }, scenes[index].duration);
+    });
+  } else {
+    document.getElementById("choices").style.display = "block";
   }
 }
 
-// market flash canvas for red flashes during crash
-function setupMarketCanvas(){
-  marketCanvas.width = window.innerWidth;
-  marketCanvas.height = window.innerHeight;
-}
-setupMarketCanvas();
-window.addEventListener('resize', setupMarketCanvas);
-
-// WebAudio simple engine (starts after user interaction)
-let audioCtx = null;
-let masterGain = null;
-let oscPulse = null;
-let crashNoise = null;
-function initAudio(){
-  if(audioCtx) return;
-  try{
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    masterGain = audioCtx.createGain();
-    masterGain.gain.value = 0.12;
-    masterGain.connect(audioCtx.destination);
-
-    // pulse oscillator (low frequency)
-    oscPulse = audioCtx.createOscillator();
-    const pulseGain = audioCtx.createGain();
-    oscPulse.type = 'sine';
-    oscPulse.frequency.value = 1.2; // slow pulse
-    pulseGain.gain.value = 0.08;
-    oscPulse.connect(pulseGain);
-    pulseGain.connect(masterGain);
-    oscPulse.start();
-
-    // create a gentle evolving ambience using periodic wave
-    const o2 = audioCtx.createOscillator();
-    o2.type = 'sawtooth';
-    const g2 = audioCtx.createGain();
-    g2.gain.value = 0.02;
-    o2.frequency.value = 40;
-    o2.connect(g2);
-    g2.connect(masterGain);
-    o2.start();
-
-    // crash noise node (buffered white noise for market crash)
-    crashNoise = audioCtx.createBufferSource();
-    // we'll create buffer on demand in playCrash()
-
-  }catch(e){
-    console.warn('Audio init failed', e);
-  }
-}
-
-function playCrash(){
-  // quick red flash + noise burst
-  // canvas flash
-  const ctx = marketCanvas.getContext('2d');
-  const w = marketCanvas.width, h = marketCanvas.height;
-  // draw transient red shapes
-  let tick = 0;
-  const id = setInterval(()=> {
-    ctx.clearRect(0,0,w,h);
-    ctx.globalCompositeOperation = 'lighter';
-    ctx.fillStyle = `rgba(255,55,55,${0.06 + Math.random()*0.12})`;
-    const size = 300 + Math.random()*900;
-    ctx.beginPath();
-    ctx.ellipse(Math.random()*w, Math.random()*h, size, size*0.3, Math.random()*Math.PI, 0, Math.PI*2);
-    ctx.fill();
-    tick++;
-    if(tick > 8){ clearInterval(id); ctx.clearRect(0,0,w,h); }
-  }, 60);
-
-  // audio burst (white noise)
-  if(!audioCtx) return;
-  const bufferSize = audioCtx.sampleRate * 0.4;
-  const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-  const data = buffer.getChannelData(0);
-  for(let i=0;i<bufferSize;i++){
-    data[i] = (Math.random()*2-1) * (1 - i/bufferSize) * 0.5;
-  }
-  const src = audioCtx.createBufferSource();
-  src.buffer = buffer;
-  const gf = audioCtx.createGain();
-  gf.gain.value = 0.8;
-  src.connect(gf);
-  gf.connect(masterGain);
-  src.start();
-  // cleanup will be automatic
-}
-
-// color shift to blue/gold
-function doColorShift(){
-  colorOverlay.style.transition = 'background 1200ms ease';
-  colorOverlay.style.background = 'linear-gradient(180deg, rgba(6,18,40,0.2), rgba(6,18,40,0.0))';
-  // also tint skyline by manipulating SVG fill color
-  const skyline = document.querySelector('#skyline');
-  if(skyline) skyline.style.fill = '#9ecbff';
-  // reveal emblem
-  emblem.classList.add('show');
-}
-
-// reveal logo initially (0:00-0:10)
-function revealLogo(){
-  logoWrap.classList.add('show');
-}
-
-// helper: type text into element with "typewriter" effect (char by char)
-function typeWriterInto(el, text, speed=18){
-  return new Promise((resolve)=>{
-    let idx = 0;
-    el.textContent = '';
-    const t = setInterval(()=>{
-      el.textContent += text.charAt(idx);
-      idx++;
-      // keep narration box scrolled if necessary
-      // the narration element is centered; scroll not needed, but in narrow screens ensure visible by brief scroll:
-      // no scrolling required — keep visible
-      if(idx >= text.length){
-        clearInterval(t);
-        // reveal element visually
-        el.classList.add('visible');
-        resolve();
-      }
-    }, speed);
-  });
-}
-
-// sequence controller that follows scenario timings
-function startSequence(){
-  // create data lines
-  createDataLines();
-
-  // logo reveal early between 0:00 - 0:10 (we fade in)
-  setTimeout(()=> revealLogo(), TIMINGS.logoAppear);
-
-  // narration sequence: schedule typewriter actions according to TIMINGS
-  // n1 at narratorStart (0:10)
-  setTimeout(async ()=>{
-    await typeWriterInto(narrationEls[0], narration[0], 36);
-  }, TIMINGS.narratorStart || TIMINGS.narratorStart);
-
-  // n2 at line2
-  setTimeout(async ()=>{
-    await typeWriterInto(narrationEls[1], narration[1], 28);
-  }, TIMINGS.line2);
-
-  // n3
-  setTimeout(async ()=>{
-    // trigger market crash visuals while typing
-    playCrash(); // a crash effect around 1:10-1:35
-    await typeWriterInto(narrationEls[2], narration[2], 30);
-  }, TIMINGS.line3);
-
-  // n4 (idea/flash)
-  setTimeout(async ()=>{
-    // small emphasis: play mild crash again
-    playCrash();
-    await typeWriterInto(narrationEls[3], narration[3], 28);
-    // reveal emblem a bit after this line
-    setTimeout(()=> emblem.classList.add('show'), 600);
-  }, TIMINGS.line4);
-
-  // n5 (2:00) — color shift and new visuals
-  setTimeout(async ()=>{
-    doColorShift();
-    await typeWriterInto(narrationEls[4], narration[4], 26);
-  }, TIMINGS.line5);
-
-  // n6 (2:30)
-  setTimeout(async ()=>{
-    await typeWriterInto(narrationEls[5], narration[5], 26);
-  }, TIMINGS.line6);
-
-  // final english line and show CTAs (close to 2:30-3:00)
-  setTimeout(async ()=>{
-    await typeWriterInto(narrationEls[6], narration[6], 26);
-    // show CTA buttons after small pause
-    setTimeout(()=> {
-      cta.classList.add('show');
-    }, 900);
-  }, TIMINGS.line7);
-
-  // play background pulse/ambience when user interacts (handled separately)
-}
-
-// user interaction to enable audio (browser policy) — first click anywhere
-function userEnableAudioOnce(){
-  function handler(){
-    initAudio();
-    // small pulse to indicate audio started
-    if(masterGain){
-      masterGain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
-      masterGain.gain.linearRampToValueAtTime(0.12, audioCtx.currentTime + 0.6);
-    }
-    // remove hint text
-    if(audioHint) audioHint.style.opacity = '0';
-    window.removeEventListener('pointerdown', handler);
-    window.removeEventListener('keydown', handler);
-  }
-  window.addEventListener('pointerdown', handler, {once:true});
-  window.addEventListener('keydown', handler, {once:true});
-}
-
-// wire CTA buttons to dispatch simple events (you can replace with navigation)
-joinBtn.addEventListener('click', ()=> {
-  // user chose to join
-  const ev = new CustomEvent('ameterium:join');
-  window.dispatchEvent(ev);
-  // small feedback
-  joinBtn.textContent = 'جارٍ الانتقال...';
-  // keep design minimal — real navigation handled elsewhere
-});
-watchBtn.addEventListener('click', ()=> {
-  const ev = new CustomEvent('ameterium:watch-old');
-  window.dispatchEvent(ev);
-  watchBtn.textContent = 'عرض...';
-});
-
-// start everything after DOM loaded
-window.addEventListener('load', ()=>{
-  // wire user audio enable
-  userEnableAudioOnce();
-  // ensure canvas size set
-  setupMarketCanvas();
-  // begin sequence with a tiny delay for polish
-  setTimeout(startSequence, 600);
-});
+showScene();
 </script>
+
 </body>
 </html>
