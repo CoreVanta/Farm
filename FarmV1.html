@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Ameterium — بداية المزرعة</title>
+
+<!-- خط Cairo -->
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg:#02020a;
+    --muted:#9aa5b1;
+    --gold:#f6c85f;
+    --green:#59c36a;
+    --glass: rgba(255,255,255,0.04);
+    --accent:#7dd3fc;
+    --nxc-color:#ffd166;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    font-family:"Cairo",system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
+    background:linear-gradient(180deg,#050513 0%, #071426 60%, #071a11 100%);
+    color:#e7eef6;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    overflow:hidden;
+    direction:rtl;
+  }
+
+  /* Stage */
+  .stage{
+    height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:28px;
+    position:relative;
+  }
+
+  /* subtle animated background lines (no external assets) */
+  .bg-lines{
+    position:absolute; inset:0; z-index:0;
+    background:
+      radial-gradient(circle at 10% 10%, rgba(125,211,252,0.03), transparent 6%),
+      radial-gradient(circle at 90% 85%, rgba(149,117,205,0.03), transparent 6%);
+    pointer-events:none;
+  }
+
+  /* dark panel */
+  .panel{
+    position:relative;
+    z-index:2;
+    width:min(1100px,96%);
+    height:min(720px,92%);
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border-radius:14px;
+    padding:22px;
+    box-shadow: 0 20px 60px rgba(2,6,23,0.7);
+    overflow:hidden;
+    display:grid;
+    grid-template-columns: 1fr 420px;
+    gap:18px;
+  }
+
+  /* Left cinematic area */
+  .cinema{
+    position:relative;
+    border-radius:10px;
+    overflow:hidden;
+    padding:18px;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    align-items:stretch;
+    justify-content:flex-start;
+  }
+
+  /* Right info column */
+  .info{
+    padding:18px;
+    border-radius:10px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.014), rgba(255,255,255,0.01));
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    align-items:stretch;
+  }
+
+  /* coordinator avatar (SVG placeholder) */
+  .avatar{
+    width:110px; height:110px; border-radius:14px;
+    background:linear-gradient(180deg,#0b1720,#07111a);
+    display:flex; align-items:center; justify-content:center;
+    box-shadow: 0 6px 18px rgba(2,6,23,0.6), inset 0 1px 0 rgba(255,255,255,0.02);
+    margin-bottom:6px;
+  }
+  .avatar svg{width:72px;height:72px;opacity:0.95}
+
+  .title{
+    font-size:20px; font-weight:700; color:var(--gold);
+    text-shadow:0 6px 22px rgba(246,200,95,0.06);
+  }
+
+  .subtitle{ color:var(--muted); font-size:13px }
+
+  /* dialogue box */
+  .dialog{
+    margin-top:6px;
+    background: rgba(255,255,255,0.02);
+    padding:14px;
+    border-radius:10px;
+    min-height:120px;
+    display:flex; flex-direction:column; gap:8px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.01);
+  }
+  .line{ opacity:0; transform:translateY(8px); transition:all 560ms cubic-bezier(.2,.9,.2,1); font-size:15px; line-height:1.6; color:#e9f3ff }
+  .line.show{ opacity:1; transform:none }
+
+  /* small data tile */
+  .tile{
+    background: rgba(0,0,0,0.18);
+    border-radius:10px;
+    padding:12px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:8px;
+    border:1px solid rgba(255,255,255,0.02);
+  }
+  .tile .k{ color:var(--muted); font-size:13px }
+  .tile .v{ color:#fff; font-weight:600 }
+
+  /* map area (simplified stylized) */
+  .map{
+    margin-top:10px;
+    flex:1;
+    border-radius:10px;
+    background: linear-gradient(180deg,#062313 0%, #0b2d18 100%);
+    padding:14px;
+    display:flex; flex-direction:column; gap:12px;
+    box-shadow:0 8px 26px rgba(2,6,23,0.5);
+  }
+  .map .map-canvas{
+    flex:1; border-radius:8px; background:
+      linear-gradient(180deg, rgba(90,173,78,0.06), rgba(20,40,20,0.06));
+    position:relative; overflow:hidden;
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  /* farm icon */
+  .farm{
+    width:240px; height:140px; border-radius:8px;
+    background: linear-gradient(180deg,#e9ffe8, #d8f7d6);
+    display:flex; flex-direction:column; gap:8px; align-items:center; justify-content:center;
+    transform:scale(0.85); transition: all 700ms ease;
+    box-shadow: 0 10px 30px rgba(15,45,15,0.35);
+    border:1px solid rgba(0,0,0,0.06);
+  }
+  .farm.glow{ transform:scale(1); box-shadow:0 18px 50px rgba(89,195,106,0.18) }
+
+  .farm h3{ margin:0; color:#285022; font-size:18px; font-weight:700 }
+  .farm p{ margin:0; color:#2c5230; font-size:13px }
+
+  /* finance box */
+  .finance{
+    margin-top:8px;
+    display:flex; flex-direction:column; gap:8px;
+  }
+  .finance .row{ display:flex; justify-content:space-between; align-items:center; font-size:14px; color:var(--muted) }
+
+  .cta{
+    margin-top:10px; display:flex; gap:10px; align-items:center;
+  }
+  .btn{
+    appearance:none; border:0; cursor:pointer; padding:12px 14px; border-radius:10px;
+    font-weight:700; font-size:14px;
+  }
+  .btn.primary{ background: linear-gradient(90deg,#2fb36a,#1f8f5a); color:white; box-shadow:0 8px 30px rgba(31,143,90,0.14) }
+  .btn.ghost{ background:transparent; border:1px solid rgba(255,255,255,0.04); color:var(--muted) }
+
+  /* activation banner */
+  .banner{
+    position:absolute; left:50%; transform:translateX(-50%); bottom:18px;
+    background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    color:var(--gold); padding:10px 18px; border-radius:10px; font-weight:700;
+    box-shadow:0 8px 30px rgba(246,200,95,0.06);
+    opacity:0; transform:translateY(12px);
+    transition:all 520ms ease;
+  }
+  .banner.show{ opacity:1; transform:none }
+
+  /* farm dashboard (final) */
+  .dashboard{
+    position:absolute; inset:18px; z-index:5; border-radius:12px; padding:24px;
+    display:flex; gap:16px; flex-direction:column;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    opacity:0; transform:translateY(18px) scale(.995);
+    transition: all 680ms cubic-bezier(.2,.9,.2,1);
+    overflow:auto;
+  }
+  .dashboard.show{ opacity:1; transform:translateY(0) scale(1) }
+
+  .dash-row{ display:flex; gap:12px; align-items:center; justify-content:space-between }
+  .dash-title{ font-size:18px; font-weight:700; color:var(--gold) }
+  .dash-cards{ display:flex; gap:12px; margin-top:12px }
+  .card{ background:rgba(0,0,0,0.16); padding:12px; border-radius:10px; min-width:160px }
+
+  /* responsive */
+  @media (max-width:980px){
+    .panel{ grid-template-columns: 1fr; height:auto; padding:12px }
+    .info{ order:2 }
+    .cinema{ order:1 }
+    .dashboard{ inset:12px }
+  }
+</style>
+</head>
+<body>
+  <div class="stage">
+    <div class="bg-lines" aria-hidden="true"></div>
+
+    <div class="panel" role="application" aria-label="مسرح بداية المزرعة">
+      <div class="cinema" id="cinema">
+
+        <!-- Avatar & header -->
+        <div style="display:flex;gap:12px;align-items:center">
+          <div class="avatar" aria-hidden="true">
+            <!-- simple coordinator face svg -->
+            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#56d4a9"/><stop offset="1" stop-color="#2fb36a"/></linearGradient></defs>
+              <rect x="6" y="8" width="52" height="40" rx="8" fill="url(#g)"/>
+              <circle cx="24" cy="28" r="4" fill="#0b1a14"/>
+              <circle cx="40" cy="28" r="4" fill="#0b1a14"/>
+              <path d="M20 38c3 3 10 3 14 0" stroke="#072014" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div style="flex:1">
+            <div class="title">المنسق</div>
+            <div class="subtitle">شبكة أميتريوم — ملف الاستدعاء</div>
+          </div>
+        </div>
+
+        <!-- Dialogue / Scenes -->
+        <div class="dialog" id="dialog">
+          <div class="line" id="line-1">"تم التحقق من هويتك بنجاح... مرحبًا بك رسميًا في شبكة أميتريوم. من هذه اللحظة، تُعامل كأحد عناصر النظام الجديد — نظام لا يميز بين غني وفقير، بل بين من يفعل ومن يتفرج."</div>
+          <div class="line" id="line-2">[عرض بياناتك الرقمية الآن]</div>
+          <div class="line" id="line-3">"أعلم ما تفكر به... أنت من تلك الطبقة التي كانت تُدعى «المتوسطة». رأسمالك القليل لم يعد كافياً لتأسيس مشروع... ولا حتى لحلم صغير."</div>
+          <div class="line" id="line-4">"بموجب لائحة الانضمام، اعتبارًا من الآن لديك رأس مال مبدئي قدره 120,000 نكسا كاش (NXC). هذا هو رصيدك الحقيقي كرائد أعمال ناشئ."</div>
+          <div class="line" id="line-5">"ستبدأ بتسجيل شركة صغيرة في القطاع الزراعي — بادئًا بمزرعة جاهزة للإدارة."</div>
+        </div>
+
+        <!-- Map / farm visual -->
+        <div class="map" aria-hidden="false">
+          <div class="map-canvas" id="mapCanvas" role="img" aria-label="خريطة المزرعة">
+            <div class="farm" id="farmEl">
+              <h3>مزرعة السهل النموذجية</h3>
+              <p>قيمة السوق: <strong>1,000,000 NXC</strong></p>
+              <p style="font-size:12px;color:#2b4c2b">مكانها مرتبط بشبكة المستثمرين</p>
+            </div>
+          </div>
+
+          <div class="finance" id="finance">
+            <div class="row"><div class="k">رأس المال المتاح</div><div class="v">120,000 NXC</div></div>
+            <div class="row"><div class="k">تأمين مطلوب</div><div class="v">100,000 NXC (10%)</div></div>
+            <div class="row"><div class="k">نسبة مدير المزرعة</div><div class="v">20% من صافي الربح</div></div>
+            <div class="row"><div class="k">نسبة المستثمرين</div><div class="v">80% من صافي الربح</div></div>
+            <div style="height:8px"></div>
+            <div class="cta">
+              <button class="btn primary" id="acceptBtn" aria-controls="dashboard">أوافق وأبدأ الإدارة</button>
+              <button class="btn ghost" id="declineBtn">تأجيل</button>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Right column: data / status -->
+      <div class="info" aria-hidden="false">
+        <div class="tile">
+          <div>
+            <div class="k">الاسم</div>
+            <div class="v" id="playerName">—</div>
+          </div>
+          <div style="text-align:left">
+            <div class="k">الدولة</div>
+            <div class="v" id="playerCountry">—</div>
+          </div>
+        </div>
+
+        <div class="tile">
+          <div>
+            <div class="k">المهنة</div>
+            <div class="v" id="playerRole">مزارع ناشئ</div>
+          </div>
+          <div style="text-align:left">
+            <div class="k">الرصيد</div>
+            <div class="v" id="playerBalance">120,000 NXC</div>
+          </div>
+        </div>
+
+        <div class="tile" style="margin-top:8px">
+          <div style="grid-column:1/-1">
+            <div class="k">حالة المشروع</div>
+            <div class="v" id="projectStatus">قيد العرض — مزرعة نموذجية</div>
+          </div>
+        </div>
+
+        <div style="flex:1"></div>
+
+        <div style="font-size:12px;color:var(--muted);line-height:1.5">
+          <strong>ملاحظة:</strong> التوقيع على عقد الإدارة يعني أنك توافق على تسليم 10% تأمين و الحصول على 20% من صافي الأرباح. باقي الحصة تعود للمستثمرين.
+        </div>
+      </div>
+
+      <!-- activation banner -->
+      <div class="banner" id="banner">جارٍ تسجيل شركتك الزراعية...</div>
+
+      <!-- dashboard (hidden until activation) -->
+      <div class="dashboard" id="dashboard" aria-hidden="true">
+        <div class="dash-row">
+          <div class="dash-title">لوحة إدارة المزرعة — مزرعة السهل النموذجية</div>
+          <div style="color:var(--muted);font-size:13px">مرحلة بدء التشغيل</div>
+        </div>
+
+        <div class="dash-cards">
+          <div class="card">
+            <div style="font-size:13px;color:var(--muted)">الرصيد المتاح</div>
+            <div style="font-weight:700;margin-top:6px">20,000 NXC</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:8px">بعد حجز التأمين</div>
+          </div>
+
+          <div class="card">
+            <div style="font-size:13px;color:var(--muted)">سرعة الإنتاج</div>
+            <div style="font-weight:700;margin-top:6px">بطيئة</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:8px">تحتاج معدات وترقيات</div>
+          </div>
+
+          <div class="card">
+            <div style="font-size:13px;color:var(--muted)">أرباح مدير المزرعة</div>
+            <div style="font-weight:700;margin-top:6px">20%</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:8px">من صافي الربح</div>
+          </div>
+        </div>
+
+        <div style="margin-top:18px">
+          <div style="font-weight:700;margin-bottom:8px">الخطوة التالية:</div>
+          <div style="color:var(--muted)">تجهيز الأرض بالزراعة الأساسية — اضغط "ابدأ زراعة" لإطلاق أول دورة إنتاج.</div>
+          <div style="margin-top:12px">
+            <button class="btn primary" id="startFarmBtn">ابدأ زراعة</button>
+            <button class="btn ghost" id="backToPanel">عودة</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+<script>
+  // ---------- Demo data (could be provided from previous flow) ----------
+  const demo = {
+    name: "أحمد",
+    country: "مصر",
+    balance: 120000,
+    farmValue: 1000000,
+    requiredDeposit: 100000,
+    managerSharePct: 20
+  };
+
+  // populate right column
+  document.getElementById('playerName').textContent = demo.name;
+  document.getElementById('playerCountry').textContent = demo.country;
+  document.getElementById('playerBalance').textContent = demo.balance.toLocaleString() + " NXC";
+  document.getElementById('projectStatus').textContent = "قيد العرض — مزرعة نموذجية";
+
+  // Sequence timings (seconds) - mapped from the narrative minutes
+  // We'll use slightly shorter durations for UX demo but preserve the feel.
+  const seq = [
+    { id:'line-1', delay: 300 },    // 0:00-0:20 -> show quickly
+    { id:'line-2', delay: 2200 },   // data window
+    { id:'line-3', delay: 4200 },   // class explanation
+    { id:'line-4', delay: 7000 },   // capital announcement
+    { id:'line-5', delay: 9400 },   // startup registration hint
+    { id:'farm-glow', delay: 11000 } // show farm glow and finance UI
+  ];
+
+  // reveal lines in order
+  seq.forEach((s, idx) => {
+    setTimeout(()=> {
+      if(s.id.startsWith('line-')){
+        const el = document.getElementById(s.id);
+        if(el) el.classList.add('show');
+      } else if(s.id === 'farm-glow'){
+        // animate farm
+        document.getElementById('farmEl').classList.add('glow');
+      }
+    }, s.delay);
+  });
+
+  // show banner then activation and dashboard on Accept
+  const banner = document.getElementById('banner');
+  const acceptBtn = document.getElementById('acceptBtn');
+  const declineBtn = document.getElementById('declineBtn');
+  const dashboard = document.getElementById('dashboard');
+  const panel = document.querySelector('.panel');
+
+  // After farm glow, show finance details slightly
+  setTimeout(()=> {
+    // reveal farm tile scale already done; show banner subtle
+    banner.classList.add('show');
+  }, 11200);
+
+  acceptBtn.addEventListener('click', ()=> {
+    // simulate deposit & activation sequence
+    acceptBtn.disabled = true;
+    acceptBtn.textContent = 'جاري التفعيل...';
+    banner.textContent = 'جارٍ تسجيل شركتك الزراعية...';
+    // simulate server/time delay
+    setTimeout(()=> {
+      banner.textContent = 'تم التفعيل — مرحبًا بك في إدارة المزرعة';
+      // reserve deposit from balance
+      const newBal = demo.balance - demo.requiredDeposit;
+      document.getElementById('playerBalance').textContent = newBal.toLocaleString() + " NXC";
+      // show dashboard
+      setTimeout(()=> {
+        dashboard.classList.add('show');
+        dashboard.setAttribute('aria-hidden','false');
+        // dim panel content behind (but keep visible)
+        // slide panel background subtly
+        // optional: we can hide cinema but keep info
+      }, 800);
+    }, 1800);
+  });
+
+  declineBtn.addEventListener('click', ()=> {
+    // user delays - simple fallback
+    alert('يمكنك العودة لاحقًا لبدء الإدارة. المزرعة ستبقى متاحة لبعض الوقت.');
+  });
+
+  // dashboard btns
+  document.getElementById('startFarmBtn').addEventListener('click', ()=> {
+    alert('تم إطلاق دورة الزراعة الأولى. ستجني أول محاصيلك قريبًا.');
+  });
+  document.getElementById('backToPanel').addEventListener('click', ()=> {
+    dashboard.classList.remove('show');
+  });
+
+  // Accessibility: allow Enter to accept
+  document.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter' && !acceptBtn.disabled) acceptBtn.click();
+  });
+
+  // small visual polish: hover farm to pop
+  const farm = document.getElementById('farmEl');
+  farm.addEventListener('mouseenter', ()=> farm.classList.add('glow'));
+  farm.addEventListener('mouseleave', ()=> farm.classList.remove('glow'));
+</script>
+</body>
+</html>
